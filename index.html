@@ -5,13 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Our Adventure Book: Cozy Desk Edition</title>
     <!-- Chosen Palette: Cozy Desk (Warm Wood, Paper White, Soft Pink, Mint Green) -->
-    <!-- Application Structure Plan: A complete redesign into an interactive "cozy desk" scene. The background is a desk, with interactive elements like a notebook (for date ideas), a corkboard map, a gaming console, and a mug acting as filters. This creates a highly immersive, tactile, and playful user experience that evolves the "planner" concept. -->
+    <!-- Application Structure Plan: A complete redesign to address the "cramped" feeling. The layout is now a two-column, vertically scrolling page. The left column is a "sticky" sidebar for all filters and guides, allowing for easy planning while scrolling. The right column is a spacious grid for the date idea "notes." This removes the fixed-height constraint and gives all content ample room to breathe. -->
     <!-- Visualization & Content Choices:
     - Report Info: Date ideas and country guides.
-    - Goal: To create a deeply personalized and interactive "planner" that feels like a user's own space.
-    - Viz/Presentation Method: Date ideas are in a flippable notebook. Filters are integrated into clickable desk objects. Country guides are on a "notepad."
-    - Interaction: Clicking desk items (console, mug, map pins) triggers filters. The notebook has a page-turning effect. A heart-sparkle mouse trail adds a magical touch.
-    - Justification: This design is a direct response to the user's request for a "different and interactable" layout, taking the personalization to a new level by creating an entire environment to play with.
+    - Goal: To create a spacious, intuitive, and interactive planner that feels personal and is easy to navigate.
+    - Viz/Presentation Method: Date ideas are in a wide, multi-column grid. Filters are consolidated into a persistent sidebar. The corkboard map and interactive desk items are integrated into this sidebar. The modal is redesigned as a polaroid.
+    - Interaction: Clicking desk items (console, mug, map pins) and filters in the sidebar updates the main content grid on the right. The page scrolls naturally. A new country search is added.
+    - Justification: This classic sidebar/content layout is proven for usability and directly solves the "cramped" issue by allowing content to flow vertically, while the scrapbook/desk styling maintains the desired cute aesthetic.
     - CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
     <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -24,7 +24,6 @@
             background-color: #6B4F3A; /* Wood desk color */
             background-image: url('https://www.transparenttextures.com/patterns/wood-pattern.png');
             color: #4A4A4A;
-            overflow-x: hidden;
             cursor: default;
         }
         .handwriting {
@@ -38,36 +37,11 @@
             z-index: 10;
         }
 
-        .desk-item {
-            position: absolute;
-            transition: transform 0.3s ease;
-        }
-        .desk-item:hover {
-            transform: scale(1.05);
-        }
-
-        .notebook {
-            background-color: #FFFDF9;
-            border-radius: 1rem;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
-            padding: 2rem;
-            position: relative;
-        }
-        .notebook::before { /* Spiral binding */
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -10px;
-            bottom: 0;
-            width: 20px;
-            background-image: linear-gradient(to bottom, #ccc, #999, #ccc);
-            border-radius: 10px;
-        }
         .note-card {
-            background: white;
+            background: #FFFDF9;
             padding: 1rem;
             border-radius: 0.5rem;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
             position: relative;
             transition: transform 0.3s ease, box-shadow 0.3s ease;
             animation: placeOnBlanket 0.5s ease-out forwards;
@@ -75,14 +49,28 @@
             border: 1px solid #f0f0f0;
         }
         .note-card:hover {
-            transform: translateY(-5px) rotate(2deg);
-            box-shadow: 0 8px 15px rgba(0,0,0,0.1);
+            transform: translateY(-5px) rotate(1deg);
+            box-shadow: 0 8px 15px rgba(0,0,0,0.15);
         }
         
+        #modal {
+            transition: opacity 0.3s ease-in-out;
+        }
         #modal-content {
-             background-image: url('https://www.transparenttextures.com/patterns/notebook-dark.png');
-             border: 1px solid #EAEAEA;
-             background-color: #FFFDF9;
+            background: white;
+            padding: 1rem;
+            padding-bottom: 4rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            position: relative;
+            width: 90%;
+            max-width: 500px;
+            border: 10px solid white;
+            transform: rotate(-2deg);
+            transition: transform 0.3s ease;
+        }
+        #modal.hidden #modal-content {
+             transform: scale(0.9) rotate(0deg);
         }
 
         #loader {
@@ -109,46 +97,23 @@
             to { opacity: 1; transform: translateY(0) scale(1); }
         }
         
-        .trail {
-            pointer-events: none;
-            position: absolute;
-            font-size: 1.5rem;
-            opacity: 0;
-            animation: trail-fade 0.7s forwards;
-        }
-        @keyframes trail-fade {
-            0% { opacity: 1; transform: scale(1); }
-            100% { opacity: 0; transform: scale(0.5); }
-        }
-        .trail-sparkle {
-            position: absolute;
-            width: 5px;
-            height: 5px;
-            background: #FFD700;
-            border-radius: 50%;
-            animation: sparkle-fade 0.5s forwards;
-        }
-        @keyframes sparkle-fade {
-            to { transform: scale(0); opacity: 0; }
-        }
-
         .tab-btn {
             padding: 0.5rem 1rem;
             border-radius: 0.5rem 0.5rem 0 0;
             border: 1px solid #ddd;
             border-bottom: none;
-            background-color: #f9f9f9;
+            background-color: #f0f0f0;
             cursor: pointer;
             transition: all 0.2s ease;
         }
         .tab-btn.active {
-            background-color: #FFFDF9;
-            border-bottom: 1px solid #FFFDF9;
+            background-color: white;
+            border-bottom: 1px solid white;
             transform: translateY(1px);
         }
         .tab-content {
             display: none;
-            background-color: #FFFDF9;
+            background-color: white;
             padding: 1.5rem;
             border: 1px solid #ddd;
             border-radius: 0 0.5rem 0.5rem 0.5rem;
@@ -207,6 +172,23 @@
             border-color: #f08080;
             transform: scale(1.05);
         }
+        
+        .falling-leaf {
+            position: fixed;
+            top: -10%;
+            width: 20px;
+            height: 20px;
+            background-color: #ffb3ba;
+            border-radius: 10% 50%;
+            animation: fall 10s infinite linear;
+            z-index: 1;
+            pointer-events: none;
+        }
+        @keyframes fall {
+            to {
+                transform: translateY(110vh) rotate(360deg);
+            }
+        }
 
     </style>
 </head>
@@ -224,88 +206,98 @@
         <p id="loader-text" class="handwriting"></p>
     </div>
 
-    <div id="app-content" class="min-h-screen p-4 md:p-8">
-        <div class="relative w-full max-w-7xl mx-auto" style="height: 90vh;">
-            <!-- Desk Items -->
-            <div id="map-container" class="desk-item corkboard p-4 w-full md:w-1/3 h-auto md:h-1/3" style="top: 2%; left: 2%;">
-                 <h3 class="text-center font-bold text-white handwriting text-2xl">Our World Map</h3>
-                 <div class="relative w-full h-full">
-                    <div class="map-pin" data-name="Ireland" style="top: 25%; left: 28%;"></div>
-                    <div class="map-pin" data-name="England" style="top: 30%; left: 33%;"></div>
-                    <div class="map-pin" data-name="Norway" style="top: 15%; left: 38%;"></div>
-                    <div class="map-pin" data-name="Sweden" style="top: 20%; left: 45%;"></div>
-                    <div class="map-pin" data-name="France" style="top: 40%; left: 35%;"></div>
-                    <div class="map-pin" data-name="South Korea" style="top: 45%; left: 85%;"></div>
-                    <div class="map-pin" data-name="Japan" style="top: 48%; left: 92%;"></div>
-                 </div>
-            </div>
+    <div id="app-content" class="p-4 md:p-8">
+        <header class="p-4 text-center mb-8">
+            <h1 class="text-5xl md:text-6xl font-bold text-white handwriting">Our Adventure Book</h1>
+            <p class="text-xl text-pink-200">All the cute dates I've planned for us!</p>
+        </header>
 
-            <div id="gaming-console" class="desk-item cursor-pointer text-5xl" style="bottom: 5%; left: 5%;" title="Gaming Dates">🎮</div>
-            <div id="mug" class="desk-item cursor-pointer text-5xl" style="bottom: 5%; left: 12%;" title="Cozy Dates">☕</div>
-
-            <div id="planner-container" class="notebook w-full md:w-3/5" style="position: absolute; top: 10%; right: 2%; height: 85%; overflow-y: auto;">
-                <div class="flex border-b border-gray-300 mb-4">
-                    <button class="tab-btn active handwriting text-xl" data-tab="tab-plan">Our Plans</button>
-                    <button class="tab-btn handwriting text-xl" data-tab="tab-guides">Country Guides</button>
-                </div>
-
-                <div id="tab-plan" class="tab-content active !p-0 !border-none !bg-transparent">
-                    <div class="flex justify-between items-center mb-4">
-                        <h2 class="text-3xl font-bold text-gray-700 handwriting">Adventure Plans</h2>
-                        <p id="results-count" class="text-gray-600"></p>
+        <div class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 lg:gap-8">
+            <!-- Sidebar -->
+            <aside class="lg:col-span-4 xl:col-span-3">
+                <div class="lg:sticky lg:top-8 space-y-6">
+                    <!-- Quick Filters -->
+                    <div class="bg-white/80 p-4 rounded-xl shadow-lg flex justify-around items-center">
+                        <div id="gaming-console" class="cursor-pointer text-5xl hover:scale-110 transition-transform" title="Gaming Dates">🎮</div>
+                        <div id="mug" class="cursor-pointer text-5xl hover:scale-110 transition-transform" title="Cozy Dates">☕</div>
+                        <div id="reset-filters-btn" class="cursor-pointer text-4xl hover:scale-110 transition-transform" title="Reset All Filters">🔄</div>
                     </div>
+
+                    <!-- Tabs -->
+                    <div class="bg-white/80 rounded-xl shadow-lg p-1">
+                        <div class="flex border-b border-gray-200">
+                            <button class="tab-btn active handwriting text-xl flex-1" data-tab="tab-plan">Planner</button>
+                            <button class="tab-btn handwriting text-xl flex-1" data-tab="tab-guides">Guides</button>
+                        </div>
+
+                        <div id="tab-plan" class="tab-content active">
+                            <div class="space-y-6">
+                                <div id="map-container" class="corkboard p-4 w-full h-48">
+                                     <h3 class="text-center font-bold text-white handwriting text-xl -mt-2 mb-1">Our World Map</h3>
+                                     <div class="relative w-full h-full">
+                                        <div class="map-pin" data-name="Ireland" style="top: 25%; left: 28%;"></div>
+                                        <div class="map-pin" data-name="England" style="top: 30%; left: 33%;"></div>
+                                        <div class="map-pin" data-name="Norway" style="top: 15%; left: 38%;"></div>
+                                        <div class="map-pin" data-name="Sweden" style="top: 20%; left: 45%;"></div>
+                                        <div class="map-pin" data-name="France" style="top: 40%; left: 35%;"></div>
+                                        <div class="map-pin" data-name="South Korea" style="top: 45%; left: 85%;"></div>
+                                        <div class="map-pin" data-name="Japan" style="top: 48%; left: 92%;"></div>
+                                     </div>
+                                </div>
+                                <div>
+                                    <input type="text" id="country-search" placeholder="Search for a country..." class="w-full p-2 border border-gray-300 rounded-lg">
+                                </div>
+                                <div>
+                                    <button id="recommended-btn" class="w-full text-white font-bold py-2 px-4 rounded-lg bg-pink-400 hover:bg-pink-500 transition-all">⭐ Just For Us</button>
+                                </div>
+                                <div>
+                                    <h3 class="font-bold text-center handwriting text-xl mb-2">What's our vibe?</h3>
+                                    <div id="interest-filter" class="flex flex-wrap gap-2 text-sm max-h-32 overflow-y-auto">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="tab-guides" class="tab-content">
+                             <h2 class="text-2xl font-bold text-gray-700 handwriting mb-2">Our Travel Notes</h2>
+                             <div id="country-guides-content" class="space-y-4 text-sm text-gray-600 max-h-96 overflow-y-auto pr-2">
+                             </div>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Main Content -->
+            <main class="lg:col-span-8 xl:col-span-9 mt-8 lg:mt-0">
+                <div class="bg-white/80 p-6 rounded-xl shadow-lg min-h-full">
+                    <p id="results-count" class="text-center md:text-left mb-4 text-gray-600 font-semibold"></p>
                     <section id="date-ideas-grid" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
                     </section>
                 </div>
-                <div id="tab-guides" class="tab-content !p-0 !border-none !bg-transparent">
-                     <h2 class="text-3xl font-bold text-gray-700 handwriting mb-4">Our Travel Notes</h2>
-                     <div id="country-guides-content" class="space-y-4 text-sm text-gray-600 max-h-[65vh] overflow-y-auto pr-2">
-                     </div>
-                </div>
-            </div>
-             <div id="filters-container" class="desk-item bg-yellow-100/80 backdrop-blur-sm p-4 rounded shadow-lg w-full md:w-1/4" style="bottom: 5%; right: 2%;">
-                <button id="recommended-btn" class="w-full mb-2 text-white font-bold py-2 px-4 rounded-lg bg-pink-400 hover:bg-pink-500 transition-all">⭐ Just For Us</button>
-                <h3 class="font-bold text-center handwriting text-xl mb-2">What's our vibe?</h3>
-                 <div id="interest-filter" class="flex flex-wrap gap-2 text-sm max-h-24 overflow-y-auto">
-                </div>
-                 <button id="reset-filters-btn" class="w-full mt-2 text-gray-600 font-bold py-1 px-2 rounded-lg bg-gray-200 hover:bg-gray-300 transition-all text-xs">Reset Filters</button>
-            </div>
+            </main>
         </div>
 
-        <div id="modal" class="hidden fixed inset-0 bg-black bg-opacity-60 z-50 flex items-center justify-center p-4">
-            <div id="modal-content" class="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
-                <div class="flex justify-between items-center p-4 border-b border-gray-200">
-                    <h2 id="modal-title" class="text-3xl font-bold text-gray-700 handwriting"></h2>
-                    <button id="close-modal" class="text-2xl font-bold text-gray-500 hover:text-red-500 transition-transform duration-300 hover:rotate-90">&times;</button>
-                </div>
-                <div class="p-6 overflow-y-auto">
-                    <div class="mb-4">
-                        <h3 class="font-bold text-xl mb-2 text-pink-400 handwriting">The Vibe:</h3>
-                        <p id="modal-vibe" class="text-gray-700"></p>
-                    </div>
-                    <div class="mb-4">
-                        <h3 class="font-bold text-xl mb-2 text-pink-400 handwriting">The Plan:</h3>
-                        <p id="modal-experience" class="text-gray-700 whitespace-pre-wrap"></p>
-                    </div>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                        <div class="p-4 bg-green-100/50 rounded-lg border border-green-200">
-                            <h4 class="font-bold">Cozy Budget ($)</h4>
-                            <p id="modal-budget-low" class="text-sm"></p>
+        <div id="modal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div id="modal-content">
+                <div id="modal-image" class="bg-gray-200 h-48 flex items-center justify-center text-6xl rounded-t-sm"></div>
+                <div class="p-4">
+                    <h2 id="modal-title" class="text-3xl font-bold text-gray-700 handwriting text-center"></h2>
+                    <div class="mt-4 space-y-4 text-sm">
+                        <div>
+                            <h3 class="font-bold text-pink-500 handwriting text-xl">The Vibe:</h3>
+                            <p id="modal-vibe" class="text-gray-600"></p>
                         </div>
-                        <div class="p-4 bg-purple-100/50 rounded-lg border border-purple-200">
-                            <h4 class="font-bold">Cute Budget ($$)</h4>
-                            <p id="modal-budget-medium" class="text-sm"></p>
+                        <div>
+                            <h3 class="font-bold text-pink-500 handwriting text-xl">The Plan:</h3>
+                            <p id="modal-experience" class="text-gray-600 whitespace-pre-wrap"></p>
                         </div>
-                        <div class="p-4 bg-pink-100/50 rounded-lg border border-pink-200">
-                            <h4 class="font-bold">Dream Budget ($$$)</h4>
-                            <p id="modal-budget-high" class="text-sm"></p>
+                        <div>
+                            <h3 class="font-bold text-pink-500 handwriting text-xl">My Secret Tip! 💡</h3>
+                            <p id="modal-tip" class="text-gray-600"></p>
                         </div>
-                    </div>
-                    <div>
-                        <h3 class="font-bold text-xl mb-2 text-pink-400 handwriting">My Secret Tip! 💡</h3>
-                        <p id="modal-tip" class="text-gray-700"></p>
                     </div>
                 </div>
+                 <button id="close-modal" class="absolute -top-4 -right-4 text-3xl font-bold text-white bg-pink-400 rounded-full h-10 w-10 flex items-center justify-center shadow-lg hover:bg-pink-500 transition">&times;</button>
             </div>
         </div>
     </div>
@@ -318,7 +310,7 @@
             { id: 4, country: "England", title: "Journey to the Stars", interests: ["Sci-fi", "Space", "Museums"], budgetLevel: ["Low", "Medium", "High"], emoji: "🚀", topPick: true, vibe: "Awe-inspiring and futuristic, from human ingenuity to the cosmos.", experience: "London's Science Museum has free galleries on space exploration. For the ultimate enthusiast, a day trip to the National Space Centre in Leicester is a must.", budgets: { low: "Explore the free permanent exhibitions at the Science Museum.", medium: "Visit the Science Museum and add tickets for an IMAX film and the Wonderlab gallery.", high: "Take a day trip to the National Space Centre in Leicester (£100-£150 for two)." }, tip: "The National Space Centre hosts special sci-fi themed events. Check their calendar." },
             { id: 5, country: "England", title: "Penguin Parade", interests: ["Penguins", "Cute Animals", "Parks", "Cold"], budgetLevel: ["Medium", "High"], emoji: "🐧", topPick: true, vibe: "An adorable day spent with one of the world's most charming creatures.", experience: "London Zoo is home to Penguin Beach, England's largest penguin pool. Birdland Park in the Cotswolds houses England's only breeding group of King Penguins.", budgets: { low: "N/A", medium: "General admission to London Zoo (£70-£80 for two).", high: "Book the 'Penguin Keeper Experience' at London Zoo (£115 per person plus admission)." }, tip: "London Zoo's website proudly states, 'Some penguins are gay. Get over it,' making it an especially welcoming choice." },
             { id: 27, country: "England", title: "Royal Park Picnic", interests: ["Picnics", "Parks", "Flowers", "Nature"], budgetLevel: ["Low", "Medium"], emoji: "🧺", topPick: true, vibe: "A classic, romantic day enjoying London's grand green spaces with a basket full of treats.", experience: "A picnic in a London Royal Park is a perfect date. Head to a Marks & Spencer or Waitrose to pick up some fancy sandwiches, snacks, and maybe a small bottle of prosecco. Find a spot in Hyde Park near the Serpentine, or for a stunning view of Buckingham Palace, set up in St. James's Park.", budgets: { low: "A simple supermarket meal deal picnic will cost around £10-£15 for two.", medium: "Go to a food market like Borough Market to assemble a gourmet picnic with artisan cheeses, breads, and pastries, costing around £30-£40.", high: "N/A" }, tip: "For the best views, Primrose Hill offers a stunning panorama of the entire London skyline, perfect for a sunset picnic." },
-            { id: 6, country: "Japan", title: "Akihabara Immersion", interests: ["Anime", "Manga", "Video Games", "Cafes", "Shopping"], budgetLevel: ["Low", "Medium", "High"], emoji: "🕹️", topPick: true, vibe: "The ultimate otaku pilgrimage in the world's most famous pop culture district.", experience: "Explore Radio Kaikan, Mandarake, and Super Potato. Experience a Maid Cafe like @Home Cafe and finish at an arcade like Taito HEY.", budgets: { low: "Browsing is free. Allocate ¥2,000-¥4,000 for arcade games and a cheap meal.", medium: "Basic Maid Cafe experience and purchase a few volumes of manga.", high: "A serious shopping trip for high-end figures (¥30,000+)." }, tip: "Visit on a Sunday when the main street is closed to traffic, creating a 'pedestrian paradise'." },
+            { id: 6, country: "Japan", title: "Akihabara Immersion", interests: ["Anime", "Manga", "Video Games", "Cafes", "Shopping"], budgetLevel: ["Low", "Medium", "High"], emoji: "🕹️", topPick: true, vibe: "The ultimate otaku pilgrimage in the world's most famous pop culture district.", experience: "Explore Radio Kaikan, Mandarake, and Super Potato. Experience a Maid Cafe like @Home Cafe and finish at an arcade like Taito HEY.", budgets: { low: "Browsing is free. Allocate ¥2,000-¥4,000 for arcade games and a cheap meal.", medium: "Basic Maid Cafe experience and purchase a few volumes of manga.", high: "A serious shopping spree for high-end figures (¥30,000+)." }, tip: "Visit on a Sunday when the main street is closed to traffic, creating a 'pedestrian paradise'." },
             { id: 7, country: "Japan", title: "The Ghibli Dream", interests: ["Anime", "Parks", "Nature"], budgetLevel: ["Low", "Medium", "High"], emoji: "🌳", topPick: true, vibe: "A magical and whimsical journey into the enchanting worlds of Studio Ghibli.", experience: "Choose between the intimate Ghibli Museum in Mitaka, Tokyo, or the sprawling, immersive Ghibli Park near Nagoya.", budgets: { low: "Secure tickets to the Ghibli Museum (¥1,000 per adult). Tickets are extremely hard to get.", medium: "Day trip to Ghibli Park from Nagoya. A weekday pass for three areas is ¥3,300 per person.", high: "Ultimate Ghibli Park day trip from Tokyo via Shinkansen (bullet train)." }, tip: "Tickets for both venues sell out in minutes. Be ready to book online at 10:00 a.m. Japan time on the 10th of the month." },
             { id: 8, country: "Japan", title: "Enoshima & Kamakura", interests: ["Seaside", "Nature", "Fish", "Dragons", "History"], budgetLevel: ["Low", "Medium", "High"], emoji: "🐉", topPick: true, vibe: "A refreshing coastal getaway combining beach town vibes, ancient shrines, and dragon mythology.", experience: "Visit Enoshima Island, home to Enoshima Shrine and its dragon legend. Then take the charming Enoden train to Kamakura to see the Great Buddha.", budgets: { low: "Purchase the Enoshima-Kamakura Freepass (¥1,640 per person) for travel from Tokyo.", medium: "Add a local specialty lunch and entrance fees for key sights.", high: "Upgrade to the 'Romancecar' for a more comfortable journey." }, tip: "Visit the Wadatsumi no Miya Shrine on Enoshima Island, dedicated to the dragon deity." },
             { id: 28, country: "Japan", title: "Sakura Picnic", interests: ["Picnics", "Parks", "Flowers", "Nature"], budgetLevel: ["Low", "Medium"], emoji: "🌸", topPick: true, vibe: "The most iconic and romantic date in Japan. Sitting under a canopy of cherry blossoms is a truly magical experience.", experience: "If you're visiting during cherry blossom season (typically late March to early April in Tokyo), a hanami (flower viewing) picnic is a must. Popular spots like Ueno Park or Shinjuku Gyoen are beautiful but can be very crowded. For a slightly quieter experience, try Inokashira Park or the banks of the Meguro River.", budgets: { low: "Grab a bento box, some onigiri, and a can of chu-hai from any convenience store for a perfect and cheap picnic under the blossoms.", medium: "Visit a depachika (department store food hall) to assemble a gourmet picnic with high-end bento, salads, and sweets.", high: "N/A" }, tip: "Arrive early to claim a good spot, especially on weekends. A blue tarp is the traditional way to reserve your space." },
@@ -348,37 +340,58 @@
             "England": {
                 vibe: "A mix of grand history and modern geek culture. We can explore ancient castles one day and dive into a neon-lit arcade the next. London is our playground!",
                 lgbtq: "Very good! The UK has strong legal protections. London, Manchester, and Brighton are super welcoming with huge LGBTQ+ scenes. We'll feel right at home.",
-                tip: "Let's definitely check out a board game cafe in London for a cozy, rainy afternoon date!"
+                tip: "Let's definitely check out a board game cafe in London for a cozy, rainy afternoon date!",
+                bestTime: "Spring (April-May) for pleasant weather and blooming parks, or Autumn (Sept-Oct) for fewer crowds.",
+                souvenir: "A unique board game from Draughts or a rare manga from Forbidden Planet.",
+                language: { hello: "Hello!", thankYou: "Thank you!", cute: "That's cute!" }
             },
             "France": {
                 vibe: "Classic romance! We'll eat so many pastries, wander through beautiful museums, and have a picnic right by the Eiffel Tower. Le Marais in Paris is our spot.",
                 lgbtq: "Good, especially in Paris. The Marais district is the historic LGBTQ+ heart of the city, full of cute bars, shops, and cafes. We can be ourselves there.",
-                tip: "We have to visit Legaychoc bakery in the Marais, it's famous for its cheeky pastries!"
+                tip: "We have to visit Legaychoc bakery in the Marais, it's famous for its cheeky pastries!",
+                bestTime: "Spring (April-June) or Fall (Sept-Oct) to avoid the summer heat and crowds.",
+                souvenir: "A beautiful box of macarons from Ladurée or a vintage book from a stall along the Seine.",
+                language: { hello: "Bonjour!", thankYou: "Merci!", cute: "C'est mignon!" }
             },
             "Ireland": {
                 vibe: "Cozy pubs, dramatic green cliffs, and a rich history of stories and legends. It's perfect for dramatic walks followed by a warm, friendly pub.",
                 lgbtq: "Very good. Ireland was the first country to legalize same-sex marriage by popular vote! Dublin has a friendly, visible LGBTQ+ scene. It's a very welcoming place.",
-                tip: "The Dublin Literary Pub Crawl sounds perfect for us – history and a fun night out combined!"
+                tip: "The Dublin Literary Pub Crawl sounds perfect for us – history and a fun night out combined!",
+                bestTime: "Summer (June-August) for the best chance of good weather for exploring the cliffs and coastline.",
+                souvenir: "A cool graphic novel from Forbidden Planet Dublin or a cozy Aran wool sweater.",
+                language: { hello: "Dia dhuit! (dee-ah gwit)", thankYou: "Go raibh maith agat! (guh rev mah ag-ut)", cute: "Tá sé gleoite! (taw shay glyoh-tcha)" }
             },
             "Japan": {
                 vibe: "The ultimate dream trip for us! We can go from the electric energy of Akihabara to the peaceful magic of a Ghibli forest. So much anime, manga, and gaming!",
                 lgbtq: "It's complicated. While there aren't nationwide marriage protections, major cities like Tokyo and Osaka are generally safe and have designated LGBTQ+ areas like Shinjuku Ni-chōme. Public displays of affection are less common for everyone, so we'll just be mindful.",
-                tip: "We absolutely have to plan our trip around getting tickets for the Ghibli Museum or Park. It'll be worth the effort!"
+                tip: "We absolutely have to plan our trip around getting tickets for the Ghibli Museum or Park. It'll be worth the effort!",
+                bestTime: "Spring (late March-April) for cherry blossoms or Autumn (Oct-Nov) for beautiful fall colors and comfortable weather.",
+                souvenir: "An exclusive figure from Akihabara or Ghibli merchandise you can only get at the museum/park.",
+                language: { hello: "Konnichiwa!", thankYou: "Arigatou gozaimasu!", cute: "Kawaii!" }
             },
             "Norway": {
                 vibe: "Epic nature and cozy Nordic life. We can chase the Northern Lights, see arctic foxes, and then warm up in a floating sauna. It's an adventure into the cold!",
                 lgbtq: "Excellent! Norway is one of the most LGBTQ+ friendly countries in the world with strong anti-discrimination laws. We can feel safe and welcome everywhere.",
-                tip: "The ethical fox encounter at Polar Park is a must-do. It's a much better choice than other places."
+                tip: "The ethical fox encounter at Polar Park is a must-do. It's a much better choice than other places.",
+                bestTime: "Winter (Nov-March) for the best chance to see the Northern Lights and enjoy the snow.",
+                souvenir: "A warm Norwegian sweater or a small troll figurine for good luck.",
+                language: { hello: "Hei!", thankYou: "Takk!", cute: "Så søt!" }
             },
             "South Korea": {
                 vibe: "A whirlwind of futuristic city life, cute cafes, and the best gaming culture. We can spend hours in a PC Bang or a cozy Manhwa cafe.",
                 lgbtq: "It's developing. Like Japan, it's generally safe, but lacks legal recognition and is more conservative outside of youth-focused areas in Seoul like Itaewon and Hongdae. We'll have a great time but will be discreet with affection.",
-                tip: "Let's plan a full day of cafe hopping in Hongdae, ending with a visit to the Thanks Nature Sheep Cafe!"
+                tip: "Let's plan a full day of cafe hopping in Hongdae, ending with a visit to the Thanks Nature Sheep Cafe!",
+                bestTime: "Spring (April-May) for cherry blossoms and pleasant weather, or Autumn (Sept-Nov) for crisp air and beautiful foliage.",
+                souvenir: "Tons of skincare products from Myeong-dong or cute character socks.",
+                language: { hello: "Annyeonghaseyo!", thankYou: "Kamsahamnida!", cute: "Gwiyeowo!" }
             },
             "Sweden": {
                 vibe: "Stylish cities, cozy 'fika' culture, and beautiful nature. We can explore historic old towns and then dive into a huge sci-fi bookstore.",
                 lgbtq: "Excellent! Like Norway, Sweden is a world leader in LGBTQ+ rights and social acceptance. We can be completely comfortable and open.",
-                tip: "A 'fika' date is a must. It's the Swedish tradition of a cozy coffee and pastry break, and it's the perfect way to relax after a day of exploring."
+                tip: "A 'fika' date is a must. It's the Swedish tradition of a cozy coffee and pastry break, and it's the perfect way to relax after a day of exploring.",
+                bestTime: "Summer (June-August) for long, sunny days perfect for exploring the archipelago and enjoying outdoor cafes.",
+                souvenir: "A cool sci-fi book from Science Fiction Bokhandeln or a classic Dala horse figurine.",
+                language: { hello: "Hej!", thankYou: "Tack!", cute: "Söt!" }
             }
         };
         
@@ -392,7 +405,7 @@
                 "Let's pack our picnic basket!",
                 "Don't forget a friend... 🦊",
                 "And something to play... 🎮",
-                "Something to read... 📖",
+                "Something to read... �",
                 "And of course, snacks! 🥪",
                 "All packed! Let's go!"
             ];
@@ -445,6 +458,7 @@
             const mug = document.getElementById('mug');
             const recommendedBtn = document.getElementById('recommended-btn');
             const resetFiltersBtn = document.getElementById('reset-filters-btn');
+            const countrySearch = document.getElementById('country-search');
 
             let currentFilters = {
                 country: 'All',
@@ -458,9 +472,11 @@
                     html += `
                         <div class="p-2 border-b last:border-b-0">
                             <h4 class="font-bold text-lg handwriting text-gray-700">${country}</h4>
+                            <p class="mt-1"><strong class="text-pink-400">Best Time to Visit:</strong> ${guide.bestTime}</p>
                             <p class="mt-1"><strong class="text-pink-400">Our Vibe:</strong> ${guide.vibe}</p>
                             <p class="mt-1"><strong class="text-pink-400">LGBTQ+ Friendliness:</strong> ${guide.lgbtq}</p>
-                            <p class="mt-1"><strong class="text-pink-400">Cute Tip:</strong> ${guide.tip}</p>
+                            <p class="mt-1"><strong class="text-pink-400">Cute Souvenir Idea:</strong> ${guide.souvenir}</p>
+                            <p class="mt-1"><strong class="text-pink-400">Language Corner:</strong> Hello: <span class="font-semibold">${guide.language.hello}</span> | Thank You: <span class="font-semibold">${guide.language.thankYou}</span> | Cute: <span class="font-semibold">${guide.language.cute}</span></p>
                         </div>
                     `;
                 }
@@ -492,7 +508,7 @@
             function renderCards() {
                 grid.innerHTML = '';
                 const filteredIdeas = dateIdeas.filter(idea => {
-                    const countryMatch = currentFilters.country === 'All' || idea.country === currentFilters.country;
+                    const countryMatch = currentFilters.country === 'All' || idea.country.toLowerCase() === currentFilters.country.toLowerCase();
                     const interestMatch = currentFilters.interests.length === 0 || currentFilters.interests.every(interest => idea.interests.includes(interest) || (interest === 'Picnics' && (idea.interests.includes('Parks') || idea.interests.includes('Seaside'))));
                     return countryMatch && interestMatch;
                 });
@@ -532,8 +548,9 @@
                     checkbox.checked = currentFilters.interests.includes(checkbox.value);
                 });
                 mapPins.forEach(pin => {
-                    pin.classList.toggle('active', pin.dataset.name === currentFilters.country);
+                    pin.classList.toggle('active', pin.dataset.name.toLowerCase() === currentFilters.country.toLowerCase());
                 });
+                countrySearch.value = currentFilters.country === 'All' ? '' : currentFilters.country;
             }
 
             function handleFilterChange() {
@@ -547,20 +564,16 @@
                 if (!idea) return;
 
                 const modalTitle = document.getElementById('modal-title');
+                const modalImage = document.getElementById('modal-image');
                 const modalVibe = document.getElementById('modal-vibe');
                 const modalExperience = document.getElementById('modal-experience');
                 const modalTip = document.getElementById('modal-tip');
-                const modalBudgetLow = document.getElementById('modal-budget-low');
-                const modalBudgetMedium = document.getElementById('modal-budget-medium');
-                const modalBudgetHigh = document.getElementById('modal-budget-high');
-
-                if (modalTitle) modalTitle.textContent = `${idea.emoji} ${idea.title}`;
+                
+                if (modalImage) modalImage.innerHTML = `<span>${idea.emoji}</span>`;
+                if (modalTitle) modalTitle.textContent = `${idea.title}`;
                 if (modalVibe) modalVibe.textContent = idea.vibe;
                 if (modalExperience) modalExperience.textContent = idea.experience;
                 if (modalTip) modalTip.textContent = idea.tip;
-                if (modalBudgetLow) modalBudgetLow.textContent = idea.budgets.low || 'N/A';
-                if (modalBudgetMedium) modalBudgetMedium.textContent = idea.budgets.medium || 'N/A';
-                if (modalBudgetHigh) modalBudgetHigh.textContent = idea.budgets.high || 'N/A';
                 
                 if (modal) modal.classList.remove('hidden');
             }
@@ -601,6 +614,17 @@
                 });
             });
 
+            countrySearch.addEventListener('input', (e) => {
+                const searchTerm = e.target.value.toLowerCase();
+                const foundCountry = Object.keys(countryGuides).find(c => c.toLowerCase().startsWith(searchTerm));
+                if (foundCountry) {
+                    currentFilters.country = foundCountry;
+                } else if (searchTerm === '') {
+                    currentFilters.country = 'All';
+                }
+                handleFilterChange();
+            });
+
             grid.addEventListener('click', (e) => {
                 const card = e.target.closest('.note-card');
                 if (card) showModal(card.dataset.id);
@@ -624,22 +648,21 @@
                 });
             });
 
-            document.addEventListener('mousemove', (e) => {
-                const trail = document.createElement('div');
-                trail.className = 'trail';
-                trail.innerHTML = '💖';
-                document.body.appendChild(trail);
-                trail.style.left = e.pageX + 'px';
-                trail.style.top = e.pageY + 'px';
-
-                const sparkle = document.createElement('div');
-                sparkle.className = 'trail-sparkle';
-                trail.appendChild(sparkle);
-
-                setTimeout(() => {
-                    document.body.removeChild(trail);
-                }, 700);
-            });
+            // Create falling leaves
+            for(let i=0; i<15; i++) {
+                const leaf = document.createElement('div');
+                leaf.className = 'falling-leaf';
+                leaf.style.left = Math.random() * 100 + 'vw';
+                leaf.style.animationDuration = Math.random() * 5 + 10 + 's';
+                leaf.style.animationDelay = Math.random() * 10 + 's';
+                leaf.style.transform = `scale(${Math.random() * 0.5 + 0.5})`;
+                if(i % 2 === 0) {
+                    leaf.style.backgroundColor = '#ffc0cb'; // pink
+                } else {
+                    leaf.style.backgroundColor = '#b0e0e6'; // powderblue
+                }
+                document.body.prepend(leaf);
+            }
 
             setupCountryGuides();
             setupInterests();
@@ -648,3 +671,4 @@
     </script>
 </body>
 </html>
+�
