@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Our Adventure Book: Cozy Desk Edition</title>
+    <!-- Chosen Palette: Cozy Desk (Warm Wood, Paper White, Soft Pink, Mint Green) -->
+    <!-- Application Structure Plan: A complete redesign into an interactive "cozy desk" scene. The background is a desk, with interactive elements like a notebook (for date ideas), a corkboard map, a gaming console, and a mug acting as filters. This creates a highly immersive, tactile, and playful user experience that evolves the "planner" concept. -->
+    <!-- Visualization & Content Choices:
+    - Report Info: Date ideas and country guides.
+    - Goal: To create a deeply personalized and interactive "planner" that feels like a user's own space.
+    - Viz/Presentation Method: Date ideas are in a flippable notebook. Filters are integrated into clickable desk objects. Country guides are on a "notepad."
+    - Interaction: Clicking desk items (console, mug, map pins) triggers filters. The notebook has a page-turning effect. A heart-sparkle mouse trail adds a magical touch.
+    - Justification: This design is a direct response to the user's request for a "different and interactable" layout, taking the personalization to a new level by creating an entire environment to play with.
+    - CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Gaegu:wght@400;700&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: #6B4F3A; /* Wood desk color */
+            background-image: url('https://www.transparenttextures.com/patterns/wood-pattern.png');
+            color: #4A4A4A;
+            overflow-x: hidden;
+            cursor: default;
+        }
+        .handwriting {
+            font-family: 'Gaegu', cursive;
+        }
+        
+        #app-content {
+            opacity: 0;
+            transition: opacity 0.5s ease-in;
+            position: relative;
+            z-index: 10;
+        }
+
+        .desk-item {
+            position: absolute;
+            transition: transform 0.3s ease;
+        }
+        .desk-item:hover {
+            transform: scale(1.05);
+        }
+
+        .notebook {
+            background-color: #FFFDF9;
+            border-radius: 1rem;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+            padding: 2rem;
+            position: relative;
+        }
+        .notebook::before { /* Spiral binding */
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -10px;
+            bottom: 0;
+            width: 20px;
+            background-image: linear-gradient(to bottom, #ccc, #999, #ccc);
+            border-radius: 10px;
+        }
+        .note-card {
+            background: white;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            position: relative;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            animation: placeOnBlanket 0.5s ease-out forwards;
+            opacity: 0;
+            border: 1px solid #f0f0f0;
+        }
+        .note-card:hover {
+            transform: translateY(-5px) rotate(2deg);
+            box-shadow: 0 8px 15px rgba(0,0,0,0.1);
+        }
+        
+        #modal-content {
+             background-image: url('https://www.transparenttextures.com/patterns/notebook-dark.png');
+             border: 1px solid #EAEAEA;
+             background-color: #FFFDF9;
+        }
+
+        #loader {
+            position: fixed;
+            inset: 0;
+            background-color: #E3F4E2;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.5s ease-out 0.5s, visibility 0.5s ease-out 0.5s;
+        }
+        .basket-container { width: 150px; height: 150px; position: relative; }
+        .basket { width: 100px; height: 60px; background: #D2B48C; border: 4px solid #8B4513; border-radius: 10px 10px 20px 20px; position: absolute; bottom: 0; left: 25px; z-index: 2; }
+        .basket-handle { width: 70px; height: 40px; border: 6px solid #8B4513; border-bottom: none; border-radius: 40px 40px 0 0; position: absolute; bottom: 50px; left: 40px; z-index: 1; }
+        .picnic-item { font-size: 2.5rem; position: absolute; top: 50%; left: 50%; transform: translate(-50%, 200%); opacity: 0; transition: all 0.5s ease-out; }
+        .picnic-item.packed { transform: translate(-50%, -80%); opacity: 1; }
+        .picnic-item.hidden { transform: translate(-50%, -150%); opacity: 0; }
+        #loader-text { margin-top: 20px; font-size: 1.5rem; color: #6B8E23; font-weight: 700; min-height: 2rem; transition: opacity 0.4s ease-in-out; }
+
+        @keyframes placeOnBlanket {
+            from { opacity: 0; transform: translateY(30px) scale(0.95); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        
+        .trail {
+            pointer-events: none;
+            position: absolute;
+            font-size: 1.5rem;
+            opacity: 0;
+            animation: trail-fade 0.7s forwards;
+        }
+        @keyframes trail-fade {
+            0% { opacity: 1; transform: scale(1); }
+            100% { opacity: 0; transform: scale(0.5); }
+        }
+        .trail-sparkle {
+            position: absolute;
+            width: 5px;
+            height: 5px;
+            background: #FFD700;
+            border-radius: 50%;
+            animation: sparkle-fade 0.5s forwards;
+        }
+        @keyframes sparkle-fade {
+            to { transform: scale(0); opacity: 0; }
+        }
+
+        .tab-btn {
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem 0.5rem 0 0;
+            border: 1px solid #ddd;
+            border-bottom: none;
+            background-color: #f9f9f9;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .tab-btn.active {
+            background-color: #FFFDF9;
+            border-bottom: 1px solid #FFFDF9;
+            transform: translateY(1px);
+        }
+        .tab-content {
+            display: none;
+            background-color: #FFFDF9;
+            padding: 1.5rem;
+            border: 1px solid #ddd;
+            border-radius: 0 0.5rem 0.5rem 0.5rem;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        
+        .corkboard {
+            background-color: #D2B48C;
+            background-image: url('https://www.transparenttextures.com/patterns/cork-wallet.png');
+            border: 10px solid #8B4513;
+            border-radius: 0.5rem;
+        }
+        .map-pin {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+        .map-pin::before { /* Pin head */
+            content: '';
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background-color: #FF6347;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        .map-pin::after { /* Pin point */
+             content: '';
+            position: absolute;
+            width: 0;
+            height: 0;
+            border-left: 3px solid transparent;
+            border-right: 3px solid transparent;
+            border-top: 6px solid #A9A9A9;
+            top: 12px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        .map-pin:hover {
+            transform: scale(1.2);
+        }
+        .map-pin.active::before {
+             background-color: #32CD32;
+        }
+        .interest-label {
+            transition: all 0.2s ease-in-out;
+        }
+        .interest-checkbox:checked + label {
+            background-color: #fde2e4;
+            border-color: #f08080;
+            transform: scale(1.05);
+        }
+
+    </style>
+</head>
+<body class="antialiased">
+
+    <div id="loader">
+        <div class="basket-container">
+            <div id="item1" class="picnic-item">🦊</div>
+            <div id="item2" class="picnic-item">🎮</div>
+            <div id="item3" class="picnic-item">📖</div>
+            <div id="item4" class="picnic-item">🥪</div>
+            <div class="basket-handle"></div>
+            <div class="basket"></div>
+        </div>
+        <p id="loader-text" class="handwriting"></p>
+    </div>
+
+    <div id="app-content" class="min-h-screen p-4 md:p-8">
+        <div class="relative w-full max-w-7xl mx-auto" style="height: 90vh;">
+            <!-- Desk Items -->
+            <div id="map-container" class="desk-item corkboard p-4 w-full md:w-1/3 h-auto md:h-1/3" style="top: 2%; left: 2%;">
+                 <h3 class="text-center font-bold text-white handwriting text-2xl">Our World Map</h3>
+                 <div class="relative w-full h-full">
+                    <div class="map-pin" data-name="Ireland" style="top: 25%; left: 28%;"></div>
+                    <div class="map-pin" data-name="England" style="top: 30%; left: 33%;"></div>
+                    <div class="map-pin" data-name="Norway" style="top: 15%; left: 38%;"></div>
+                    <div class="map-pin" data-name="Sweden" style="top: 20%; left: 45%;"></div>
+                    <div class="map-pin" data-name="France" style="top: 40%; left: 35%;"></div>
+                    <div class="map-pin" data-name="South Korea" style="top: 45%; left: 85%;"></div>
+                    <div class="map-pin" data-name="Japan" style="top: 48%; left: 92%;"></div>
+                 </div>
+            </div>
+
+            <div id="gaming-console" class="desk-item cursor-pointer text-5xl" style="bottom: 5%; left: 5%;" title="Gaming Dates">🎮</div>
+            <div id="mug" class="desk-item cursor-pointer text-5xl" style="bottom: 5%; left: 12%;" title="Cozy Dates">☕</div>
+
+            <div id="planner-container" class="notebook w-full md:w-3/5" style="position: absolute; top: 10%; right: 2%; height: 85%; overflow-y: auto;">
+                <div class="flex border-b border-gray-300 mb-4">
+                    <button class="tab-btn active handwriting text-xl" data-tab="tab-plan">Our Plans</button>
+                    <button class="tab-btn handwriting text-xl" data-tab="tab-guides">Country Guides</button>
+                </div>
+
+                <div id="tab-plan" class="tab-content active !p-0 !border-none !bg-transparent">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-3xl font-bold text-gray-700 handwriting">Adventure Plans</h2>
+                        <p id="results-count" class="text-gray-600"></p>
+                    </div>
+                    <section id="date-ideas-grid" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+                    </section>
+                </div>
+                <div id="tab-guides" class="tab-content !p-0 !border-none !bg-transparent">
+                     <h2 class="text-3xl font-bold text-gray-700 handwriting mb-4">Our Travel Notes</h2>
+                     <div id="country-guides-content" class="space-y-4 text-sm text-gray-600 max-h-[65vh] overflow-y-auto pr-2">
+                     </div>
+                </div>
+            </div>
+             <div id="filters-container" class="desk-item bg-yellow-100/80 backdrop-blur-sm p-4 rounded shadow-lg w-full md:w-1/4" style="bottom: 5%; right: 2%;">
+                <button id="recommended-btn" class="w-full mb-2 text-white font-bold py-2 px-4 rounded-lg bg-pink-400 hover:bg-pink-500 transition-all">⭐ Just For Us</button>
+                <h3 class="font-bold text-center handwriting text-xl mb-2">What's our vibe?</h3>
+                 <div id="interest-filter" class="flex flex-wrap gap-2 text-sm max-h-24 overflow-y-auto">
+                </div>
+                 <button id="reset-filters-btn" class="w-full mt-2 text-gray-600 font-bold py-1 px-2 rounded-lg bg-gray-200 hover:bg-gray-300 transition-all text-xs">Reset Filters</button>
+            </div>
+        </div>
+
+        <div id="modal" class="hidden fixed inset-0 bg-black bg-opacity-60 z-50 flex items-center justify-center p-4">
+            <div id="modal-content" class="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
+                <div class="flex justify-between items-center p-4 border-b border-gray-200">
+                    <h2 id="modal-title" class="text-3xl font-bold text-gray-700 handwriting"></h2>
+                    <button id="close-modal" class="text-2xl font-bold text-gray-500 hover:text-red-500 transition-transform duration-300 hover:rotate-90">&times;</button>
+                </div>
+                <div class="p-6 overflow-y-auto">
+                    <div class="mb-4">
+                        <h3 class="font-bold text-xl mb-2 text-pink-400 handwriting">The Vibe:</h3>
+                        <p id="modal-vibe" class="text-gray-700"></p>
+                    </div>
+                    <div class="mb-4">
+                        <h3 class="font-bold text-xl mb-2 text-pink-400 handwriting">The Plan:</h3>
+                        <p id="modal-experience" class="text-gray-700 whitespace-pre-wrap"></p>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                        <div class="p-4 bg-green-100/50 rounded-lg border border-green-200">
+                            <h4 class="font-bold">Cozy Budget ($)</h4>
+                            <p id="modal-budget-low" class="text-sm"></p>
+                        </div>
+                        <div class="p-4 bg-purple-100/50 rounded-lg border border-purple-200">
+                            <h4 class="font-bold">Cute Budget ($$)</h4>
+                            <p id="modal-budget-medium" class="text-sm"></p>
+                        </div>
+                        <div class="p-4 bg-pink-100/50 rounded-lg border border-pink-200">
+                            <h4 class="font-bold">Dream Budget ($$$)</h4>
+                            <p id="modal-budget-high" class="text-sm"></p>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-xl mb-2 text-pink-400 handwriting">My Secret Tip! 💡</h3>
+                        <p id="modal-tip" class="text-gray-700"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const dateIdeas = [
+            { id: 1, country: "England", title: "London's Cat Cafés", interests: ["Cats", "Cafes", "Cute Animals", "Meals"], budgetLevel: ["Low", "Medium", "High"], emoji: "🐱", topPick: true, vibe: "A cozy and relaxing escape from the city bustle, surrounded by feline friends.", experience: "London's cat café scene offers a delightful variety. For a heartwarming experience, Java Whiskers functions as a foster home for rescue cats. For a more indulgent date, Whiskers & Cream offers artisan coffees and full afternoon tea.", budgets: { low: "Visit a Kitty Cafe location. Welfare charge is £8 per adult, plus a coffee each, totals around £26.", medium: "Book a session at Java Whiskers. Entry fees are typically £15-£20 per person, allowing for entry, coffee, and cake.", high: "Reserve the full Afternoon Tea experience at Whiskers & Cream (£40-£50+ per person)." }, tip: "All cat cafes are popular. Book your time slot online in advance, especially for weekends, to guarantee entry." },
+            { id: 2, country: "England", title: "Geek Culture Pilgrimage", interests: ["Anime", "Manga", "Video Games", "Shopping", "Board Games"], budgetLevel: ["Low", "Medium", "High"], emoji: "🎮", topPick: true, vibe: "A vibrant and exciting dive into London's geek culture hubs.", experience: "Start in Camden Town at Japan Craft. Then, visit the legendary Forbidden Planet. For evening entertainment, choose between modern gaming at Platform, retro arcades at NQ64, or board games at Draughts.", budgets: { low: "Browsing shops is free. An hour of gaming at Otter Chaos board game cafe is £2 per person per hour.", medium: "Buy a manga each at Forbidden Planet (£20-£30). Then, visit NQ64 for their 'Gaming & Drinks Combo'.", high: "Indulge in a shopping spree (£50+). Book a 'Cocktails & Controllers' experience at Platform." }, tip: "Many board game cafes host special event nights, such as Dungeons & Dragons." },
+            { id: 3, country: "England", title: "A Walk Through History", interests: ["History", "Museums"], budgetLevel: ["Low", "Medium", "High"], emoji: "🏛️", topPick: true, vibe: "A profound journey through 20th-century conflict.", experience: "For WWI, visit the IWM London. For WWII, the Churchill War Rooms offer an atmospheric experience. For military machinery, The Tank Museum in Dorset is unparalleled.", budgets: { low: "Both the IWM London and the National Army Museum offer free admission.", medium: "Visit the Churchill War Rooms. Tickets are £33 per adult online.", high: "Day trip to The Tank Museum in Bovington (£200+ for train, entry, meal)." }, tip: "An IWM Membership can be cost-effective if you plan on visiting their paid sites." },
+            { id: 4, country: "England", title: "Journey to the Stars", interests: ["Sci-fi", "Space", "Museums"], budgetLevel: ["Low", "Medium", "High"], emoji: "🚀", topPick: true, vibe: "Awe-inspiring and futuristic, from human ingenuity to the cosmos.", experience: "London's Science Museum has free galleries on space exploration. For the ultimate enthusiast, a day trip to the National Space Centre in Leicester is a must.", budgets: { low: "Explore the free permanent exhibitions at the Science Museum.", medium: "Visit the Science Museum and add tickets for an IMAX film and the Wonderlab gallery.", high: "Take a day trip to the National Space Centre in Leicester (£100-£150 for two)." }, tip: "The National Space Centre hosts special sci-fi themed events. Check their calendar." },
+            { id: 5, country: "England", title: "Penguin Parade", interests: ["Penguins", "Cute Animals", "Parks", "Cold"], budgetLevel: ["Medium", "High"], emoji: "🐧", topPick: true, vibe: "An adorable day spent with one of the world's most charming creatures.", experience: "London Zoo is home to Penguin Beach, England's largest penguin pool. Birdland Park in the Cotswolds houses England's only breeding group of King Penguins.", budgets: { low: "N/A", medium: "General admission to London Zoo (£70-£80 for two).", high: "Book the 'Penguin Keeper Experience' at London Zoo (£115 per person plus admission)." }, tip: "London Zoo's website proudly states, 'Some penguins are gay. Get over it,' making it an especially welcoming choice." },
+            { id: 27, country: "England", title: "Royal Park Picnic", interests: ["Picnics", "Parks", "Flowers", "Nature"], budgetLevel: ["Low", "Medium"], emoji: "🧺", topPick: true, vibe: "A classic, romantic day enjoying London's grand green spaces with a basket full of treats.", experience: "A picnic in a London Royal Park is a perfect date. Head to a Marks & Spencer or Waitrose to pick up some fancy sandwiches, snacks, and maybe a small bottle of prosecco. Find a spot in Hyde Park near the Serpentine, or for a stunning view of Buckingham Palace, set up in St. James's Park.", budgets: { low: "A simple supermarket meal deal picnic will cost around £10-£15 for two.", medium: "Go to a food market like Borough Market to assemble a gourmet picnic with artisan cheeses, breads, and pastries, costing around £30-£40.", high: "N/A" }, tip: "For the best views, Primrose Hill offers a stunning panorama of the entire London skyline, perfect for a sunset picnic." },
+            { id: 6, country: "Japan", title: "Akihabara Immersion", interests: ["Anime", "Manga", "Video Games", "Cafes", "Shopping"], budgetLevel: ["Low", "Medium", "High"], emoji: "🕹️", topPick: true, vibe: "The ultimate otaku pilgrimage in the world's most famous pop culture district.", experience: "Explore Radio Kaikan, Mandarake, and Super Potato. Experience a Maid Cafe like @Home Cafe and finish at an arcade like Taito HEY.", budgets: { low: "Browsing is free. Allocate ¥2,000-¥4,000 for arcade games and a cheap meal.", medium: "Basic Maid Cafe experience and purchase a few volumes of manga.", high: "A serious shopping trip for high-end figures (¥30,000+)." }, tip: "Visit on a Sunday when the main street is closed to traffic, creating a 'pedestrian paradise'." },
+            { id: 7, country: "Japan", title: "The Ghibli Dream", interests: ["Anime", "Parks", "Nature"], budgetLevel: ["Low", "Medium", "High"], emoji: "🌳", topPick: true, vibe: "A magical and whimsical journey into the enchanting worlds of Studio Ghibli.", experience: "Choose between the intimate Ghibli Museum in Mitaka, Tokyo, or the sprawling, immersive Ghibli Park near Nagoya.", budgets: { low: "Secure tickets to the Ghibli Museum (¥1,000 per adult). Tickets are extremely hard to get.", medium: "Day trip to Ghibli Park from Nagoya. A weekday pass for three areas is ¥3,300 per person.", high: "Ultimate Ghibli Park day trip from Tokyo via Shinkansen (bullet train)." }, tip: "Tickets for both venues sell out in minutes. Be ready to book online at 10:00 a.m. Japan time on the 10th of the month." },
+            { id: 8, country: "Japan", title: "Enoshima & Kamakura", interests: ["Seaside", "Nature", "Fish", "Dragons", "History"], budgetLevel: ["Low", "Medium", "High"], emoji: "🐉", topPick: true, vibe: "A refreshing coastal getaway combining beach town vibes, ancient shrines, and dragon mythology.", experience: "Visit Enoshima Island, home to Enoshima Shrine and its dragon legend. Then take the charming Enoden train to Kamakura to see the Great Buddha.", budgets: { low: "Purchase the Enoshima-Kamakura Freepass (¥1,640 per person) for travel from Tokyo.", medium: "Add a local specialty lunch and entrance fees for key sights.", high: "Upgrade to the 'Romancecar' for a more comfortable journey." }, tip: "Visit the Wadatsumi no Miya Shrine on Enoshima Island, dedicated to the dragon deity." },
+            { id: 28, country: "Japan", title: "Sakura Picnic", interests: ["Picnics", "Parks", "Flowers", "Nature"], budgetLevel: ["Low", "Medium"], emoji: "🌸", topPick: true, vibe: "The most iconic and romantic date in Japan. Sitting under a canopy of cherry blossoms is a truly magical experience.", experience: "If you're visiting during cherry blossom season (typically late March to early April in Tokyo), a hanami (flower viewing) picnic is a must. Popular spots like Ueno Park or Shinjuku Gyoen are beautiful but can be very crowded. For a slightly quieter experience, try Inokashira Park or the banks of the Meguro River.", budgets: { low: "Grab a bento box, some onigiri, and a can of chu-hai from any convenience store for a perfect and cheap picnic under the blossoms.", medium: "Visit a depachika (department store food hall) to assemble a gourmet picnic with high-end bento, salads, and sweets.", high: "N/A" }, tip: "Arrive early to claim a good spot, especially on weekends. A blue tarp is the traditional way to reserve your space." },
+            { id: 9, country: "South Korea", title: "Manhwa & Webtoon Cafes", interests: ["Manga", "Cafes", "Meals"], budgetLevel: ["Low", "Medium", "High"], emoji: "📖", topPick: true, vibe: "The ultimate cozy, quiet escape. A personal oasis to lounge for hours with comics and snacks.", experience: "Pay for a block of time, get a private cubicle, and access a huge collection of comics. You can order ramen or tteokbokki right to your space. The Nolsoop franchise is popular.", budgets: { low: "A 1-hour package with an included drink (₩10,000-₩15,000 for two).", medium: "A 2-3 hour package with drinks, plus snacks (₩25,000-₩35,000 for two).", high: "Get a full-day pass and order a full meal." }, tip: "Many cubicles have power outlets, making it a great place to recharge your phones." },
+            { id: 10, country: "South Korea", title: "PC Bang Experience", interests: ["Video Games", "Meals"], budgetLevel: ["Low", "Medium", "High"], emoji: "🖥️", topPick: true, vibe: "A high-energy, immersive dive into Korea's world-famous gaming culture.", experience: "PC bangs are 24/7 gaming sanctuaries with high-end PCs and ultra-fast internet. You can order an extensive menu of food delivered directly to your desk.", budgets: { low: "Play for 2-3 hours and order a simple snack (₩15,000-₩20,000 for two).", medium: "A longer 4-5 hour session with a more substantial meal set.", high: "Make a full night of it with a large block of time and a variety of food." }, tip: "Find two seats together first, reserve them with a jacket, and then go to the kiosk to pay." },
+            { id: 11, country: "South Korea", title: "Ethical Animal Adventure", interests: ["Cute Animals", "Foxes", "Nature", "Cafes"], budgetLevel: ["Low", "Medium", "High"], emoji: "🦊", topPick: true, vibe: "A fun day with animals in cafes that prioritize their well-being.", experience: "Thanks Nature Cafe has sheep. Bauhas Dog Cafe has areas for large and small dogs. Meerkat Friends is home to meerkats, a wallaby, and an Arctic fox.", budgets: { low: "Visit the Thanks Nature Sheep Cafe. No entrance fee, just buy a drink.", medium: "Visit a dog or cat cafe (typically an entrance fee with a drink).", high: "Visit Meerkat Friends. The entrance fee is higher but offers a unique experience." }, tip: "The animal cafes in Hongdae are located near each other, making it possible to visit more than one." },
+            { id: 29, country: "South Korea", title: "Han River Picnic", interests: ["Picnics", "Parks", "Seaside", "Meals"], budgetLevel: ["Low", "Medium"], emoji: "🧺", topPick: true, vibe: "The quintessential Seoul date. Enjoying fried chicken and ramen by the river as the city lights up.", experience: "Head to Yeouido Hangang Park or Ttukseom Hangang Park. You can rent a picnic mat from vendors near the subway station. The classic experience is to order 'chimaek' (chicken and beer) for delivery directly to your spot on the grass. You can also buy instant noodles from a riverside convenience store and use their special noodle-cooking machines.", budgets: { low: "A convenience store picnic with ramen and kimbap will cost less than ₩15,000 for two.", medium: "A full chimaek set delivered to the park will be around ₩25,000-₩35,000.", high: "N/A" }, tip: "For a romantic touch, take an evening river cruise after your picnic to see the city's illuminated bridges." },
+            { id: 12, country: "France", title: "The Art of the Pâtisserie", interests: ["Cafes", "Meals"], budgetLevel: ["Low", "Medium", "High"], emoji: "🥐", vibe: "An indulgent and quintessentially Parisian experience.", experience: "Hop between iconic pâtisseries. Visit Stohrer (the oldest), Pierre Hermé (modern pastry king), and Yann Couvreur (creative eclairs).", budgets: { low: "Get a croissant from a local boulangerie and enjoy on a park bench (€15-€20).", medium: "Visit two or three famous shops and get one pastry to share from each (€40-€50).", high: "Indulge in the edible art of Cédric Grolet or the hot chocolate at Angelina (€80+)." }, tip: "Discovering your own 'perfect' croissant from a neighborhood shop is a classic Parisian romance." },
+            { id: 13, country: "France", title: "Paris's Libraries", interests: ["Library Dates", "History"], budgetLevel: ["Low", "Medium"], emoji: "📚", topPick: true, vibe: "A quiet, romantic, and awe-inspiring date for lovers of books and beautiful architecture.", experience: "Visit the Bibliothèque Sainte-Geneviève (iron-arched reading room), the Bibliothèque Nationale de France's Salle Ovale (Oval Room), or the historic Bibliothèque Mazarine.", budgets: { low: "Viewing the main reading rooms of many historic libraries is often free.", medium: "Some libraries or exhibitions may require a small entrance fee (€15-€20).", high: "N/A" }, tip: "These are active research libraries. Be mindful and quiet. The experience is about the atmosphere." },
+            { id: 14, country: "France", title: "A Date in Le Marais", interests: ["Cafes", "Shopping", "History"], budgetLevel: ["Low", "Medium", "High"], emoji: "🏳️‍🌈", vibe: "A vibrant, stylish, and welcoming day in the LGBTQ+ heart of Paris.", experience: "Explore Le Marais, the hub of Paris's gay community. Browse boutiques, visit Legaychoc bakery, and relax in the Place des Vosges. The area has many LGBTQ+ bookstores and bars.", budgets: { low: "Wandering is free. Grab a pastry and enjoy it in the Place des Vosges (€10-€20).", medium: "Have lunch at a bistro and a pre-dinner cocktail at a gay bar (€60-€80).", high: "Go shopping, enjoy a nice dinner, and have a night out (€100-€150+)." }, tip: "The heart of the gay district is centered around Rue Sainte-Croix de la Bretonnerie." },
+            { id: 30, country: "France", title: "Eiffel Tower Picnic", interests: ["Picnics", "Parks", "Nature"], budgetLevel: ["Low", "Medium"], emoji: "🧺", topPick: true, vibe: "The most iconic picnic in the world. Watching the Eiffel Tower sparkle from a blanket on the Champ de Mars.", experience: "This is a must-do romantic date. Go to a fromagerie for cheese, a boulangerie for a fresh baguette, and a supermarket for a bottle of wine. Find a spot on the grass of the Champ de Mars with a great view of the tower. Time your picnic for the evening so you can see the tower light up and sparkle on the hour.", budgets: { low: "A simple baguette, cheese, and wine picnic will cost around €15-€20.", medium: "Assemble a more elaborate spread from a market street like Rue Cler, adding charcuterie, fruit, and pastries for around €30-€40.", high: "N/A" }, tip: "For a slightly different view with fewer crowds, try having your picnic across the river at the Jardins du Trocadéro." },
+            { id: 15, country: "Norway", title: "Oslofjord Experience", interests: ["Seaside", "Nature", "Cold"], budgetLevel: ["Low", "Medium", "High"], emoji: "🧖", topPick: true, vibe: "A perfect blend of refreshing nature and invigorating Nordic wellness.", experience: "Use Oslo's public ferry system to explore the islands of the Oslofjord. Afterwards, return to the harborfront for a session at a floating sauna like KOK Oslo.", budgets: { low: "A 24-hour public transport ticket covers the ferries. Pack a picnic (80-150 NOK).", medium: "Book a spot in a shared session at a public sauna (500-700 NOK).", high: "Rent a private floating sauna for a couple of hours (1,000-2,000+ NOK)." }, tip: "Ferry schedules change with the seasons. Always check the Ruter app for up-to-date times." },
+            { id: 16, country: "Norway", title: "Chasing the Aurora", interests: ["Cold", "Nature", "Space"], budgetLevel: ["Medium", "High"], emoji: "🌌", topPick: true, vibe: "A magical, once-in-a-lifetime adventure into the Arctic night.", experience: "Travel to Northern Norway (Tromsø is best). Book a guided tour to get away from city lights. These range from large bus chases to intimate minibus excursions.", budgets: { low: "N/A", medium: "Book a small-group minibus tour (1,700-2,300 NOK per person).", high: "Book a private aurora chase or a multi-day package (14,900+ NOK)." }, tip: "Book flights, accommodation, and tours several months in advance for the peak season (Sept-March)." },
+            { id: 17, country: "Norway", title: "Ethical Fox Sighting", interests: ["Foxes", "Cute Animals", "Nature", "Cold"], budgetLevel: ["Medium", "High"], emoji: "🦊", topPick: true, vibe: "A unique and ethical wildlife encounter in a conservation-focused park.", experience: "Visit Polar Park in Bardu (near Tromsø). This is the world's northernmost animal park. Observe Arctic foxes in a large, natural enclosure.", budgets: { low: "N/A", medium: "Budget for a rental car or bus, plus park admission (1,000-2,000 NOK total).", high: "Book the premium 'Fox Encounter' to go inside the enclosure with a guide." }, tip: "This is a far more ethical way to see foxes than places like Japan's Zao Fox Village." },
+            { id: 18, country: "Sweden", title: "Fika & Old Town Charm", interests: ["Cafes", "Meals", "History", "Shopping"], budgetLevel: ["Low", "Medium", "High"], emoji: "☕", vibe: "A cozy and historic day embracing the quintessential Swedish tradition of 'fika' amidst the cobblestone streets of Stockholm's Old Town.", experience: "Spend the day exploring Gamla Stan (Old Town). Wander its narrow, colorful streets, browse the unique souvenir shops, and then fully embrace the Swedish concept of fika—a relaxing coffee and pastry break. Visit a classic café like Chokladkoppen for a hot chocolate or Kaffekoppen next door, both located in the picturesque Stortorget square.", budgets: { low: "Wander Gamla Stan for free. Grab a coffee and a kanelbulle (cinnamon bun) from a bakery to enjoy on a bench (150-200 SEK for two).", medium: "Have a proper sit-down fika at a historic café. Then, visit the Nobel Prize Museum in the square (300 SEK for two).", high: "After fika, visit the Royal Palace (400 SEK for two). For dinner, enjoy a traditional Swedish meal at a restaurant in Gamla Stan." }, tip: "Gamla Stan is beautiful but can be touristy. For a more local fika experience, head to the Södermalm district, known for its trendy and independent cafes." },
+            { id: 19, country: "Sweden", title: "Gaming & Geek Culture", interests: ["Video Games", "Board Games", "Sci-fi", "Shopping"], budgetLevel: ["Low", "Medium", "High"], emoji: "👾", topPick: true, vibe: "A playful and competitive dive into Stockholm's thriving geek and gaming scene.", experience: "Start at the Science Fiction Bokhandeln in Gamla Stan, a legendary bookstore for sci-fi, fantasy, manga, and games. Then, head to Inferno Online, one of the world's largest gaming centers, for some high-end PC gaming. For a more relaxed evening, visit a board game café like Alphaspel or Dragon's Lair.", budgets: { low: "Browsing the bookstore is free. Spend an hour or two at a board game café, which often has a small cover charge or requires a purchase (200-300 SEK for two).", medium: "Buy a book or manga (200-300 SEK). Spend a few hours at Inferno Online (hourly rates are low, budget 400-500 SEK for gaming and snacks).", high: "Go on a shopping spree for games and books. Book a longer session at Inferno Online with a full meal, or spend the evening at a board game café trying multiple games with dinner and drinks." }, tip: "Check the event schedules for Alphaspel or Dragon's Lair. They often host tournaments, game nights, and pre-release events." },
+            { id: 20, country: "Sweden", title: "Archipelago Adventure", interests: ["Seaside", "Nature", "Fish"], budgetLevel: ["Low", "Medium", "High"], emoji: "⛵", vibe: "A refreshing escape from the city into the stunning natural beauty of the Stockholm Archipelago.", experience: "The Stockholm Archipelago consists of over 30,000 islands. Take a public ferry from central Stockholm to a nearby island like Fjäderholmarna (the closest) or the more substantial Vaxholm, often called the 'capital of the archipelago'. Explore the charming villages, swim in the Baltic Sea, and enjoy the tranquil scenery.", budgets: { low: "Take the public ferry to Fjäderholmarna. Pack a picnic to enjoy on the rocks by the sea (300-400 SEK for two for ferry tickets).", medium: "Travel to Vaxholm. Explore the town and its fortress, and have a traditional seafood lunch at a harborside restaurant.", high: "Book a guided boat tour that explores several islands, often including lunch. Or, for a truly special experience, rent a kayak to explore the islands at your own pace." }, tip: "The ferries are part of the public transport system during some seasons, but dedicated tourist boats also run. Check the Waxholmsbolaget and Strömma websites for timetables and tickets." },
+            { id: 21, country: "Sweden", title: "Winter in Stockholm", interests: ["Cold", "Snow", "Museums", "Cafes"], budgetLevel: ["Low", "Medium", "High"], emoji: "❄️", topPick: true, vibe: "Embracing the cozy magic of a Swedish winter with ice skating, warm museums, and festive lights.", experience: "If visiting in winter, embrace the cold! Go ice skating at the outdoor rink in Kungsträdgården park. Warm up afterwards by visiting a museum, like the Vasa Museum (home to an almost fully intact 17th-century ship) or Skansen, the world's first open-air museum, which is especially charming in the snow.", budgets: { low: "Ice skating in Kungsträdgården is free if you have your own skates; skate rental is affordable. Wander the decorated streets and enjoy the festive atmosphere.", medium: "After skating, visit the Vasa Museum (380 SEK for two). Enjoy a warm drink and pastry at a café.", high: "Spend the day at Skansen, which has a higher entrance fee but offers a full day of activities, including historic buildings and Nordic animals. Enjoy a traditional Christmas market if visiting in December." }, tip: "The 'Stockholm Pass' can be good value if you plan on visiting multiple museums like the Vasa, Skansen, and the Royal Palace." },
+            { id: 22, country: "Ireland", title: "Dublin's Literary Pub Crawl", interests: ["Library Dates", "History", "Meals"], budgetLevel: ["Medium", "High"], emoji: "🍺", topPick: true, vibe: "A lively and intellectual evening combining Ireland's rich literary history with its legendary pub culture.", experience: "Join the award-winning Dublin Literary Pub Crawl. Professional actors lead you through the historic pubs frequented by writers like James Joyce, Samuel Beckett, and Oscar Wilde. They perform scenes from their works and share entertaining anecdotes about their lives. It's a performance, a history lesson, and a pub tour all in one.", budgets: { low: "N/A - This is a ticketed event.", medium: "Purchase tickets for the pub crawl (€30 for two). This covers the performance; drinks are purchased separately at each pub.", high: "Enjoy the pub crawl and have a full pub dinner at one of the stops, like The Duke or Davy Byrnes. Sample a few different Irish whiskeys or craft beers throughout the night." }, tip: "Book your tickets online in advance, as the crawl is very popular and can sell out, especially on weekends." },
+            { id: 23, country: "Ireland", title: "Geek & Gaming Dublin", interests: ["Video Games", "Board Games", "Shopping"], budgetLevel: ["Low", "Medium", "High"], emoji: "🎲", topPick: true, vibe: "A fun-filled day exploring Dublin's geek culture hotspots, from comic shops to retro arcades.", experience: "Start at Forbidden Planet Dublin, a haven for comics, manga, and collectibles. For video games, head to The R.A.G.E. (Record, Art, and Game Emporium) which has a fantastic retro arcade upstairs. For board games, visit The Clockwork Door, a unique 'time house' where you pay for the time you spend inside and get unlimited access to games, tea, and coffee.", budgets: { low: "Browsing shops is free. Spend an hour at The Clockwork Door, which is very affordable (around €10-15 for two for an hour).", medium: "Buy a graphic novel or manga (€20-30). Spend a few hours gaming at The R.A.G.E. arcade and have a casual lunch nearby.", high: "Go on a proper shopping spree. Spend a long afternoon at The Clockwork Door with snacks, and in the evening, visit Token, a restaurant/bar/arcade for dinner, drinks, and more gaming." }, tip: "The Clockwork Door is run on an honesty system and is a very welcoming, sober-friendly space, making it a great alternative to a pub." },
+            { id: 24, country: "Ireland", title: "Cliffs of Moher & Coastal Scenery", interests: ["Seaside", "Nature", "Cold"], budgetLevel: ["Medium", "High"], emoji: "🌊", topPick: true, vibe: "An epic and dramatic journey to one of Ireland's most breathtaking natural wonders.", experience: "Take a day tour from Dublin to the Cliffs of Moher on the Atlantic coast. These majestic cliffs stretch for 14 kilometers and rise up to 214 meters above the ocean. The views are absolutely spectacular. Most tours also include stops at other scenic spots along the Wild Atlantic Way, such as the Burren (a unique limestone landscape) and the charming city of Galway.", budgets: { low: "N/A - Requires a tour or car rental.", medium: "Book a coach day tour from Dublin. These are excellent value, typically costing €60-€80 per person, and provide a full day of sightseeing.", high: "Rent a car for a couple of days to explore the west coast at your own pace. This allows you to visit the cliffs at less crowded times (early morning or late evening) and stay overnight in a cozy B&B in a town like Doolin." }, tip: "The weather at the cliffs can change in an instant. Wear layers and bring a waterproof jacket, even if it's sunny in Dublin!" },
+            { id: 25, country: "Ireland", title: "A Date with Dublin's Penguins", interests: ["Penguins", "Cute Animals", "Parks"], budgetLevel: ["Medium"], emoji: "🐧", topPick: true, vibe: "An adorable and educational day at one of Europe's oldest and most respected zoos.", experience: "Visit Dublin Zoo, located in the vast and beautiful Phoenix Park. The zoo is home to a colony of Humboldt penguins in a habitat designed to mimic the coast of Peru. You can watch them swim and socialize from the underwater viewing area. The zoo is a registered charity and participates in international breeding programs, making it an ethical choice.", budgets: { low: "N/A", medium: "Purchase tickets for Dublin Zoo (around €45-50 for two). After visiting the penguins, you can spend the rest of the day exploring the rest of the zoo and walking through Phoenix Park.", high: "N/A" }, tip: "Phoenix Park is one of the largest enclosed public parks in any European capital city. After the zoo, try to spot the park's famous herd of wild fallow deer." },
+            { id: 26, country: "Ireland", title: "Howth Cliff Walk & Seafood", interests: ["Seaside", "Nature", "Fish", "Meals"], budgetLevel: ["Low", "Medium", "High"], emoji: "🐟", vibe: "A refreshing and scenic coastal walk followed by some of the best seafood in Dublin.", experience: "Take the DART train from Dublin city center to the charming fishing village of Howth. From the village, you can embark on the Howth Cliff Walk, a stunning loop trail that offers incredible views of the Irish Sea and Dublin Bay. After your walk, return to the harbor and reward yourselves with fresh fish and chips from a legendary spot like Beshoff Bros.", budgets: { low: "The DART train fare is affordable. The cliff walk is free. Pack a lunch to eat on the cliffs (around €15-€20 for two for transport and snacks).", medium: "After your walk, get a takeaway fish and chips from Beshoff Bros and eat it on the pier (around €40-€50 for two).", high: "Enjoy a leisurely sit-down seafood dinner at a restaurant like Aqua or The Oar House, with beautiful views of the harbor." }, tip: "There are several routes for the cliff walk, ranging from an easy 1-hour walk to a more challenging 3-hour loop. Choose the one that best suits your fitness level." }
+        ];
+
+        const countryGuides = {
+            "England": {
+                vibe: "A mix of grand history and modern geek culture. We can explore ancient castles one day and dive into a neon-lit arcade the next. London is our playground!",
+                lgbtq: "Very good! The UK has strong legal protections. London, Manchester, and Brighton are super welcoming with huge LGBTQ+ scenes. We'll feel right at home.",
+                tip: "Let's definitely check out a board game cafe in London for a cozy, rainy afternoon date!"
+            },
+            "France": {
+                vibe: "Classic romance! We'll eat so many pastries, wander through beautiful museums, and have a picnic right by the Eiffel Tower. Le Marais in Paris is our spot.",
+                lgbtq: "Good, especially in Paris. The Marais district is the historic LGBTQ+ heart of the city, full of cute bars, shops, and cafes. We can be ourselves there.",
+                tip: "We have to visit Legaychoc bakery in the Marais, it's famous for its cheeky pastries!"
+            },
+            "Ireland": {
+                vibe: "Cozy pubs, dramatic green cliffs, and a rich history of stories and legends. It's perfect for dramatic walks followed by a warm, friendly pub.",
+                lgbtq: "Very good. Ireland was the first country to legalize same-sex marriage by popular vote! Dublin has a friendly, visible LGBTQ+ scene. It's a very welcoming place.",
+                tip: "The Dublin Literary Pub Crawl sounds perfect for us – history and a fun night out combined!"
+            },
+            "Japan": {
+                vibe: "The ultimate dream trip for us! We can go from the electric energy of Akihabara to the peaceful magic of a Ghibli forest. So much anime, manga, and gaming!",
+                lgbtq: "It's complicated. While there aren't nationwide marriage protections, major cities like Tokyo and Osaka are generally safe and have designated LGBTQ+ areas like Shinjuku Ni-chōme. Public displays of affection are less common for everyone, so we'll just be mindful.",
+                tip: "We absolutely have to plan our trip around getting tickets for the Ghibli Museum or Park. It'll be worth the effort!"
+            },
+            "Norway": {
+                vibe: "Epic nature and cozy Nordic life. We can chase the Northern Lights, see arctic foxes, and then warm up in a floating sauna. It's an adventure into the cold!",
+                lgbtq: "Excellent! Norway is one of the most LGBTQ+ friendly countries in the world with strong anti-discrimination laws. We can feel safe and welcome everywhere.",
+                tip: "The ethical fox encounter at Polar Park is a must-do. It's a much better choice than other places."
+            },
+            "South Korea": {
+                vibe: "A whirlwind of futuristic city life, cute cafes, and the best gaming culture. We can spend hours in a PC Bang or a cozy Manhwa cafe.",
+                lgbtq: "It's developing. Like Japan, it's generally safe, but lacks legal recognition and is more conservative outside of youth-focused areas in Seoul like Itaewon and Hongdae. We'll have a great time but will be discreet with affection.",
+                tip: "Let's plan a full day of cafe hopping in Hongdae, ending with a visit to the Thanks Nature Sheep Cafe!"
+            },
+            "Sweden": {
+                vibe: "Stylish cities, cozy 'fika' culture, and beautiful nature. We can explore historic old towns and then dive into a huge sci-fi bookstore.",
+                lgbtq: "Excellent! Like Norway, Sweden is a world leader in LGBTQ+ rights and social acceptance. We can be completely comfortable and open.",
+                tip: "A 'fika' date is a must. It's the Swedish tradition of a cozy coffee and pastry break, and it's the perfect way to relax after a day of exploring."
+            }
+        };
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            const loader = document.getElementById('loader');
+            const loaderText = document.getElementById('loader-text');
+            const appContent = document.getElementById('app-content');
+            const items = [document.getElementById('item1'), document.getElementById('item2'), document.getElementById('item3'), document.getElementById('item4')];
+
+            const personalizedTexts = [
+                "Let's pack our picnic basket!",
+                "Don't forget a friend... 🦊",
+                "And something to play... 🎮",
+                "Something to read... 📖",
+                "And of course, snacks! 🥪",
+                "All packed! Let's go!"
+            ];
+
+            let textIndex = 0;
+            let itemIndex = 0;
+
+            const packNextItem = () => {
+                if (itemIndex < items.length) {
+                    items[itemIndex].classList.add('packed');
+                    setTimeout(() => {
+                        items[itemIndex].classList.add('hidden');
+                        itemIndex++;
+                    }, 600);
+                }
+            };
+            
+            const intervalId = setInterval(() => {
+                loaderText.style.opacity = '0';
+                setTimeout(() => {
+                    textIndex++;
+                    if (textIndex < personalizedTexts.length) {
+                        loaderText.textContent = personalizedTexts[textIndex];
+                        loaderText.style.opacity = '1';
+                        if (textIndex > 0 && textIndex < 5) {
+                           packNextItem();
+                        }
+                    } else {
+                        clearInterval(intervalId);
+                        setTimeout(() => {
+                            loader.style.opacity = '0';
+                            loader.style.visibility = 'hidden';
+                            appContent.style.opacity = '1';
+                        }, 500);
+                    }
+                }, 400);
+            }, 1500);
+            loaderText.textContent = personalizedTexts[0];
+
+            const interestFilter = document.getElementById('interest-filter');
+            const grid = document.getElementById('date-ideas-grid');
+            const resultsCount = document.getElementById('results-count');
+            const modal = document.getElementById('modal');
+            const closeModal = document.getElementById('close-modal');
+            const tabs = document.querySelectorAll('.tab-btn');
+            const tabContents = document.querySelectorAll('.tab-content');
+            const countryGuidesContent = document.getElementById('country-guides-content');
+            const mapPins = document.querySelectorAll('.map-pin');
+            const gamingConsole = document.getElementById('gaming-console');
+            const mug = document.getElementById('mug');
+            const recommendedBtn = document.getElementById('recommended-btn');
+            const resetFiltersBtn = document.getElementById('reset-filters-btn');
+
+            let currentFilters = {
+                country: 'All',
+                interests: []
+            };
+            const userInterests = ['Anime', 'Manga', 'Video Games', 'History', 'Sci-fi', 'Space', 'Dragons', 'Cats', 'Foxes', 'Cute Animals', 'Cold', 'Board Games', 'Library Dates', 'Penguins', 'Picnics'];
+
+            function setupCountryGuides() {
+                let html = '';
+                for (const [country, guide] of Object.entries(countryGuides)) {
+                    html += `
+                        <div class="p-2 border-b last:border-b-0">
+                            <h4 class="font-bold text-lg handwriting text-gray-700">${country}</h4>
+                            <p class="mt-1"><strong class="text-pink-400">Our Vibe:</strong> ${guide.vibe}</p>
+                            <p class="mt-1"><strong class="text-pink-400">LGBTQ+ Friendliness:</strong> ${guide.lgbtq}</p>
+                            <p class="mt-1"><strong class="text-pink-400">Cute Tip:</strong> ${guide.tip}</p>
+                        </div>
+                    `;
+                }
+                countryGuidesContent.innerHTML = html;
+            }
+
+            function setupInterests() {
+                const allInterests = [...new Set(dateIdeas.flatMap(idea => idea.interests))].sort();
+                allInterests.push('Picnics');
+                [...new Set(allInterests)].forEach(interest => {
+                    const id = `interest-${interest.replace(/\s+/g, '-')}`;
+                    const checkbox = document.createElement('input');
+                    checkbox.type = 'checkbox';
+                    checkbox.id = id;
+                    checkbox.value = interest;
+                    checkbox.className = 'sr-only interest-checkbox';
+                    checkbox.addEventListener('change', handleFilterChange);
+                    
+                    const label = document.createElement('label');
+                    label.htmlFor = id;
+                    label.textContent = interest;
+                    label.className = 'interest-label cursor-pointer px-3 py-1 border border-gray-300 rounded-full bg-white hover:bg-gray-100';
+                    
+                    interestFilter.appendChild(checkbox);
+                    interestFilter.appendChild(label);
+                });
+            }
+
+            function renderCards() {
+                grid.innerHTML = '';
+                const filteredIdeas = dateIdeas.filter(idea => {
+                    const countryMatch = currentFilters.country === 'All' || idea.country === currentFilters.country;
+                    const interestMatch = currentFilters.interests.length === 0 || currentFilters.interests.every(interest => idea.interests.includes(interest) || (interest === 'Picnics' && (idea.interests.includes('Parks') || idea.interests.includes('Seaside'))));
+                    return countryMatch && interestMatch;
+                });
+
+                resultsCount.textContent = `I've found ${filteredIdeas.length} plans for us!`;
+
+                if (filteredIdeas.length === 0) {
+                    grid.innerHTML = `<p class="text-center text-gray-500 col-span-full handwriting text-lg">Hmm, none of my plans match... Let's try different filters!</p>`;
+                    return;
+                }
+
+                filteredIdeas.forEach((idea, index) => {
+                    const card = document.createElement('div');
+                    card.className = 'note-card cursor-pointer';
+                    card.dataset.id = idea.id;
+                    card.style.animationDelay = `${index * 50}ms`;
+                    
+                    const topPickStar = idea.topPick ? `<span class="text-yellow-400 text-2xl absolute top-2 right-3" title="This one is a Top Pick for us!">⭐</span>` : '';
+
+                    card.innerHTML = `
+                        <div class="note-image">
+                            <span>${idea.emoji}</span>
+                        </div>
+                        <div class="note-caption">
+                            <p class="font-bold text-md leading-tight text-gray-700">${idea.title}</p>
+                            <p class="text-sm text-gray-500 handwriting">${idea.country}</p>
+                        </div>
+                        ${topPickStar}
+                    `;
+                    grid.appendChild(card);
+                });
+            }
+
+            function syncFilters() {
+                const interestCheckboxes = interestFilter.querySelectorAll('input[type="checkbox"]');
+                interestCheckboxes.forEach(checkbox => {
+                    checkbox.checked = currentFilters.interests.includes(checkbox.value);
+                });
+                mapPins.forEach(pin => {
+                    pin.classList.toggle('active', pin.dataset.name === currentFilters.country);
+                });
+            }
+
+            function handleFilterChange() {
+                currentFilters.interests = Array.from(interestFilter.querySelectorAll('input[type="checkbox"]:checked')).map(cb => cb.value);
+                syncFilters();
+                renderCards();
+            }
+            
+            function showModal(ideaId) {
+                const idea = dateIdeas.find(i => i.id == ideaId);
+                if (!idea) return;
+
+                const modalTitle = document.getElementById('modal-title');
+                const modalVibe = document.getElementById('modal-vibe');
+                const modalExperience = document.getElementById('modal-experience');
+                const modalTip = document.getElementById('modal-tip');
+                const modalBudgetLow = document.getElementById('modal-budget-low');
+                const modalBudgetMedium = document.getElementById('modal-budget-medium');
+                const modalBudgetHigh = document.getElementById('modal-budget-high');
+
+                if (modalTitle) modalTitle.textContent = `${idea.emoji} ${idea.title}`;
+                if (modalVibe) modalVibe.textContent = idea.vibe;
+                if (modalExperience) modalExperience.textContent = idea.experience;
+                if (modalTip) modalTip.textContent = idea.tip;
+                if (modalBudgetLow) modalBudgetLow.textContent = idea.budgets.low || 'N/A';
+                if (modalBudgetMedium) modalBudgetMedium.textContent = idea.budgets.medium || 'N/A';
+                if (modalBudgetHigh) modalBudgetHigh.textContent = idea.budgets.high || 'N/A';
+                
+                if (modal) modal.classList.remove('hidden');
+            }
+
+            function hideModal() {
+                if (modal) modal.classList.add('hidden');
+            }
+
+            recommendedBtn.addEventListener('click', () => {
+                currentFilters.interests = [...userInterests];
+                currentFilters.country = 'All';
+                handleFilterChange();
+            });
+
+            resetFiltersBtn.addEventListener('click', () => {
+                currentFilters.interests = [];
+                currentFilters.country = 'All';
+                handleFilterChange();
+            });
+
+            gamingConsole.addEventListener('click', () => {
+                currentFilters.interests = ['Video Games', 'Board Games', 'Anime', 'Manga', 'Sci-fi'];
+                currentFilters.country = 'All';
+                handleFilterChange();
+            });
+
+            mug.addEventListener('click', () => {
+                currentFilters.interests = ['Cafes', 'Picnics', 'Meals', 'Library Dates'];
+                currentFilters.country = 'All';
+                handleFilterChange();
+            });
+            
+            mapPins.forEach(pin => {
+                pin.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    currentFilters.country = pin.dataset.name;
+                    handleFilterChange();
+                });
+            });
+
+            grid.addEventListener('click', (e) => {
+                const card = e.target.closest('.note-card');
+                if (card) showModal(card.dataset.id);
+            });
+            
+            if(closeModal) closeModal.addEventListener('click', hideModal);
+            if(modal) modal.addEventListener('click', (e) => {
+                if (e.target === modal) hideModal();
+            });
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') hideModal();
+            });
+
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    tabs.forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    tabContents.forEach(content => {
+                        content.classList.toggle('active', content.id === tab.dataset.tab);
+                    });
+                });
+            });
+
+            document.addEventListener('mousemove', (e) => {
+                const trail = document.createElement('div');
+                trail.className = 'trail';
+                trail.innerHTML = '💖';
+                document.body.appendChild(trail);
+                trail.style.left = e.pageX + 'px';
+                trail.style.top = e.pageY + 'px';
+
+                const sparkle = document.createElement('div');
+                sparkle.className = 'trail-sparkle';
+                trail.appendChild(sparkle);
+
+                setTimeout(() => {
+                    document.body.removeChild(trail);
+                }, 700);
+            });
+
+            setupCountryGuides();
+            setupInterests();
+            handleFilterChange();
+        });
+    </script>
+</body>
+</html>
