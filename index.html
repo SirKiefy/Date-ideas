@@ -90,7 +90,7 @@
             box-shadow: 0 10px 25px rgba(0,0,0,0.2);
         }
 
-        #loader, #password-screen, #logon-screen {
+        #entry-screen {
             position: fixed;
             inset: 0;
             background-color: #f4f1ea;
@@ -98,22 +98,34 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            flex-direction: column;
             transition: opacity 0.5s ease, visibility 0.5s ease;
         }
-        #loader.hidden, #password-screen.hidden, #logon-screen.hidden {
+        #entry-screen.hidden {
             opacity: 0;
             visibility: hidden;
         }
-
-        .writing-hand {
-            font-size: 4rem;
-            animation: write 2s infinite ease-in-out;
+        
+        .animation-container {
+            text-align: center;
         }
-        @keyframes write {
-            0%, 100% { transform: rotate(10deg); }
-            50% { transform: rotate(-5deg) translateX(-10px); }
+        .anim-text {
+            font-size: 2rem;
+            transition: opacity 0.5s ease-in-out;
+            opacity: 0;
+            min-height: 3rem;
         }
-        #loader-text { margin-top: 20px; font-size: 1.5rem; color: #5a5a5a; font-weight: 700; }
+        .anim-icon {
+            font-size: 3rem;
+            display: inline-block;
+            transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.5s;
+            transform: scale(0);
+            opacity: 0;
+        }
+        .anim-text.visible, .anim-icon.visible {
+            opacity: 1;
+            transform: scale(1);
+        }
 
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(20px); }
@@ -175,6 +187,13 @@
             border-radius: 1rem;
             box-shadow: 0 10px 25px rgba(0,0,0,0.1);
             text-align: center;
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out;
+            pointer-events: none;
+        }
+        .password-box.visible {
+            opacity: 1;
+            pointer-events: all;
         }
         .password-input.error {
             animation: shake 0.5s;
@@ -184,57 +203,22 @@
             25% { transform: translateX(-5px); }
             75% { transform: translateX(5px); }
         }
-        
-        .picnic-basket-logon {
-            background-color: #D2B48C;
-            border: 8px solid #8B4513;
-            border-top: none;
-            border-radius: 0 0 40px 40px;
-            padding: 2rem 3rem;
-            text-align: center;
-            position: relative;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
-        }
-        .picnic-basket-logon::before { /* Handle */
-            content: '';
-            position: absolute;
-            top: -25px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 120px;
-            height: 60px;
-            border: 10px solid #8B4513;
-            border-bottom: none;
-            border-radius: 60px 60px 0 0;
-        }
-        .picnic-basket-logon::after { /* Cloth */
-            content: '🍓';
-            font-size: 2rem;
-            color: white;
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 40px;
-            background-image: linear-gradient(45deg, #ff6b81 25%, transparent 25%), linear-gradient(-45deg, #ff6b81 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #ff6b81 75%), linear-gradient(-45deg, transparent 75%, #ff6b81 75%);
-            background-size: 20px 20px;
-            background-color: #ffb3ba;
-            border-bottom: 4px solid #ff6b81;
-        }
 
     </style>
 </head>
 <body class="antialiased">
 
-    <div id="logon-screen">
-        <div class="picnic-basket-logon">
-            <h2 class="text-4xl handwriting text-white relative z-10" style="text-shadow: 2px 2px 4px rgba(0,0,0,0.5);">Ready for our adventure?</h2>
-            <button id="logon-button" class="mt-6 relative z-10 text-gray-700 font-bold py-2 px-6 rounded-lg bg-white hover:bg-gray-200 transition-all shadow-md">Open Diary</button>
+    <div id="entry-screen">
+        <div class="animation-container mb-8">
+            <p id="anim-text" class="anim-text handwriting"></p>
+            <div class="mt-4 space-x-4">
+                <span id="anim-icon-1" class="anim-icon"></span>
+                <span id="anim-icon-2" class="anim-icon"></span>
+                <span id="anim-icon-3" class="anim-icon"></span>
+                <span id="anim-icon-4" class="anim-icon"></span>
+            </div>
         </div>
-    </div>
-
-    <div id="password-screen" class="hidden">
-        <div class="password-box">
+        <div id="password-box" class="password-box">
             <h2 class="text-3xl handwriting text-gray-700 mb-4">Our Secret Diary</h2>
             <p class="text-gray-500 mb-4">What's the secret password?</p>
             <form id="password-form">
@@ -242,11 +226,6 @@
                 <button type="submit" class="w-full mt-4 text-white font-bold py-2 px-4 rounded-lg bg-pink-400 hover:bg-pink-500 transition-all">Unlock</button>
             </form>
         </div>
-    </div>
-
-    <div id="loader" class="hidden">
-        <div class="writing-hand">✏️</div>
-        <p id="loader-text" class="handwriting">Writing in my diary...</p>
     </div>
 
     <div id="app-content">
@@ -419,19 +398,7 @@
         };
         
         document.addEventListener('DOMContentLoaded', () => {
-            const loader = document.getElementById('loader');
             const appContent = document.getElementById('app-content');
-            
-            setTimeout(() => {
-                const passwordScreen = document.getElementById('password-screen');
-                if (passwordScreen && passwordScreen.classList.contains('hidden')) {
-                    if (loader) {
-                        loader.style.opacity = '0';
-                        loader.style.visibility = 'hidden';
-                    }
-                }
-            }, 1500); 
-
             const interestFilter = document.getElementById('interest-filter');
             const grid = document.getElementById('date-ideas-grid');
             const resultsCount = document.getElementById('results-count');
@@ -448,8 +415,10 @@
             const passwordScreen = document.getElementById('password-screen');
             const passwordForm = document.getElementById('password-form');
             const passwordInput = document.getElementById('password-input');
-            const logonScreen = document.getElementById('logon-screen');
-            const logonButton = document.getElementById('logon-button');
+            const entryScreen = document.getElementById('entry-screen');
+            const animText = document.getElementById('anim-text');
+            const animIcons = [document.getElementById('anim-icon-1'), document.getElementById('anim-icon-2'), document.getElementById('anim-icon-3'), document.getElementById('anim-icon-4')];
+            const passwordBox = document.getElementById('password-box');
 
             let currentFilters = {
                 country: 'All',
@@ -457,21 +426,48 @@
             };
             const userInterests = ['Anime', 'Manga', 'Video Games', 'History', 'Sci-fi', 'Space', 'Dragons', 'Cats', 'Foxes', 'Cute Animals', 'Cold', 'Board Games', 'Library Dates', 'Penguins', 'Picnics'];
 
-            logonButton.addEventListener('click', () => {
-                logonScreen.classList.add('hidden');
-                passwordScreen.classList.remove('hidden');
-                passwordInput.focus();
-            });
+            const animationSteps = [
+                { text: "Thinking about our next adventure...", icons: ["🌍"] },
+                { text: "Maybe somewhere with cute animals...", icons: ["🦊", "🐱", "🐧"] },
+                { text: "And lots of games to play...", icons: ["🎮", "🎲"] },
+                { text: "And of course, yummy food!", icons: ["🧺", "🥐", "☕"] },
+                { text: "Okay, I've got some ideas!", icons: ["💖"] },
+            ];
+
+            let animStep = 0;
+            function runAnimation() {
+                if (animStep >= animationSteps.length) {
+                    passwordBox.classList.add('visible');
+                    passwordInput.focus();
+                    return;
+                }
+
+                const step = animationSteps[animStep];
+                animText.textContent = step.text;
+                animText.classList.add('visible');
+                
+                animIcons.forEach((icon, i) => {
+                    if (step.icons[i]) {
+                        icon.textContent = step.icons[i];
+                        setTimeout(() => icon.classList.add('visible'), (i + 1) * 200);
+                    }
+                });
+
+                setTimeout(() => {
+                    animText.classList.remove('visible');
+                    animIcons.forEach(icon => icon.classList.remove('visible'));
+                    animStep++;
+                    setTimeout(runAnimation, 500);
+                }, 2500);
+            }
+            
+            runAnimation();
 
             passwordForm.addEventListener('submit', (e) => {
                 e.preventDefault();
                 if (passwordInput.value === 'FG£%GJ03493FJ£JF___£F£F(2') {
-                    passwordScreen.classList.add('hidden');
-                    loader.classList.remove('hidden');
-                    setTimeout(() => {
-                        loader.classList.add('hidden');
-                        appContent.classList.add('unlocked');
-                    }, 2000);
+                    entryScreen.classList.add('hidden');
+                    appContent.classList.add('unlocked');
                 } else {
                     passwordInput.classList.add('error');
                     setTimeout(() => {
